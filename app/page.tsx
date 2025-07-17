@@ -25,7 +25,7 @@ export default function Home() {
             Ankara Pattern Recall
           </h1>
           <p className="text-gray-600 text-lg">
-            Test your memory with beautiful African patterns
+            Test your memory with beautiful ankara patterns
           </p>
         </header>
 
