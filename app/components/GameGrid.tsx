@@ -74,6 +74,10 @@ export default function GameGrid({
     setCurrentTrial(0);
     setAssessmentComplete(false);
 
+    // Reset working memory scorer and score
+    workingMemoryScorer.reset();
+    onWorkingMemoryScoreChange?.(0);
+
     // Generate truly random first sequence
     const firstStep = Math.floor(Math.random() * totalSquares);
     const firstSequence = [firstStep];
