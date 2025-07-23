@@ -142,7 +142,7 @@ export default function ScoreTracker({
   const interpretation = getWorkingMemoryInterpretation(workingMemoryScore);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 min-w-64">
+    <div className="bg-white rounded-lg shadow-md p-4 min-w-64 text-black">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
         Performance Tracker
       </h3>
