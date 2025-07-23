@@ -114,16 +114,19 @@ export default function ScoreTracker({
     setIsLoading(true);
     try {
       const ageInMonths = ageInYears * 12;
-      const response = await fetch("http://localhost:8000/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          Age: ageInMonths,
-          WorkingMemory_Score: workingMemoryScore,
-        }),
-      });
+      const response = await fetch(
+        "https://africogbe-production.up.railway.app/predict",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            Age: ageInMonths,
+            WorkingMemory_Score: workingMemoryScore,
+          }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
