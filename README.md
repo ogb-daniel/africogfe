@@ -59,11 +59,18 @@ This application provides a sequential cognitive assessment through three carefu
 - **Calculation**: `Base Score - (Timeouts × 15 points)`
 - **Final Score**: Maximum 100, minimum 0
 
-#### Scoring Examples
+#### Detailed Processing Speed Penalty Examples
 
-- **Perfect Performance**: 5/5 trials correct, no timeouts = 100 WM, 100 PS
-- **Good Performance**: 4/5 trials correct, 1 timeout = 80 WM, 65 PS
-- **Average Performance**: 3/5 trials correct, 2 timeouts = 60 WM, 30 PS
+**Time Penalty Calculation:**
+```
+Final Score = Base Score - (Number of Timeouts × 15 points)
+```
+
+**Scoring Examples:**
+- **Perfect Performance**: 5/5 correct, 0 timeouts = 100 - (0 × 15) = **100 PS**
+- **Good Performance**: 4/5 correct, 1 timeout = 80 - (1 × 15) = **65 PS**
+- **Average Performance**: 3/5 correct, 2 timeouts = 60 - (2 × 15) = **30 PS**
+- **Poor Performance**: 2/5 correct, 3 timeouts = 40 - (3 × 15) = **0 PS** (minimum)
 
 ---
 
@@ -94,14 +101,25 @@ This application provides a sequential cognitive assessment through three carefu
 - **Stroop Bonus**: Up to 5 additional points for handling incongruent trials well
 - **Time Penalty**: Deduction for slow responses (>3 seconds average)
 
-#### Scoring Formula
+#### Detailed Scoring Formula & Examples
 
 ```
 Base Score = (Correct Responses / Total Trials) × 100
-Stroop Bonus = max(0, (Incongruent Accuracy - 0.5) × 40)
+Stroop Bonus = max(0, (Incongruent Accuracy - 0.5) × 10)
 Time Penalty = min(10, max(0, (Avg Response Time - 3000) / 500))
 Final Score = min(100, max(0, Base Score + Stroop Bonus - Time Penalty))
 ```
+
+**Stroop Bonus Examples:**
+- 60% incongruent accuracy: max(0, (0.6 - 0.5) × 10) = **1 bonus point**
+- 80% incongruent accuracy: max(0, (0.8 - 0.5) × 10) = **3 bonus points**  
+- 100% incongruent accuracy: max(0, (1.0 - 0.5) × 10) = **5 bonus points**
+- 40% incongruent accuracy: max(0, (0.4 - 0.5) × 10) = **0 bonus points**
+
+**Time Penalty Examples:**
+- 2.5 seconds average: min(10, max(0, (2500 - 3000) / 500)) = **0 penalty**
+- 4.0 seconds average: min(10, max(0, (4000 - 3000) / 500)) = **2 penalty points**
+- 8.0 seconds average: min(10, max(0, (8000 - 3000) / 500)) = **10 penalty points** (capped)
 
 #### Performance Analysis
 
@@ -138,24 +156,38 @@ Final Score = min(100, max(0, Base Score + Stroop Bonus - Time Penalty))
 - **Phoneme Analysis**: Letter-by-letter similarity assessment
 - **Speed Bonus**: Up to 10 points for quick responses (<10 seconds)
 
-#### Partial Credit System
+#### Detailed Partial Credit & Bonus System
 
+**Phoneme Accuracy Calculation:**
 ```
-Phoneme Accuracy = (Matching Letters in Correct Positions / Max Word Length) × 0.7 +
-                   (Common Letters Present / Word Length) × 0.3
-
-Partial Credit Tiers:
-- >80% phoneme accuracy: 80% of full points
-- >60% phoneme accuracy: 60% of full points
-- >40% phoneme accuracy: 40% of full points
-- >20% phoneme accuracy: 20% of full points
-- <20% phoneme accuracy: 0% of full points
+Phoneme Accuracy = (Position Matches / Max Length) × 0.7 + (Common Letters / Word Length) × 0.3
 ```
 
-#### Bonus Systems
+**Partial Credit Tiers:**
+- >80% phoneme accuracy: **80% of 20 points = 16 points**
+- >60% phoneme accuracy: **60% of 20 points = 12 points**
+- >40% phoneme accuracy: **40% of 20 points = 8 points**
+- >20% phoneme accuracy: **20% of 20 points = 4 points**
+- <20% phoneme accuracy: **0 points**
 
-- **Speed Bonus**: up to 10 points
-- **Phoneme Recognition**: Up to 5 bonus points per trial for good sound recognition
+**Speed Bonus Formula:**
+```
+Speed Bonus = max(0, (10000 - Response Time) / 1000)
+```
+
+**Speed Bonus Examples:**
+- 5 seconds response: max(0, (10000 - 5000) / 1000) = **5 bonus points**
+- 8 seconds response: max(0, (10000 - 8000) / 1000) = **2 bonus points**
+- 12 seconds response: max(0, (10000 - 12000) / 1000) = **0 bonus points**
+
+**Complete Scoring Example:**
+For "dinosaur" spelled as "dinosur":
+- Position matches: d-i-n-o-s-u-r (7/8) = 87.5%
+- Common letters: all 7 letters present (7/8) = 87.5%
+- Phoneme Accuracy: (0.875 × 0.7) + (0.875 × 0.3) = **87.5%**
+- Partial Credit: 80% tier = **16 points**
+- Speed Bonus: 6 seconds = **4 bonus points**
+- **Total: 20 points** (16 + 4, capped at 20)
 
 #### Performance Metrics
 
