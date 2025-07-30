@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { mapAttentionPredictionToString, mapPredictionToString } from "@/utils";
+import { useEffect, useState, useCallback } from "react";
 
 interface ScoreTrackerProps {
   currentScore: number;
-  gameMode: "3x3" | "4x4";
+  gameMode: "3x3" | "4x4" | "chameleon" | "phonics";
   workingMemoryScore?: number;
+  processingSpeedScore?: number;
+  attentionScore?: number;
+  auditoryProcessingScore?: number;
+  userAge?: number;
+  gamePhase?: string;
   onReset?: () => void;
+  onAgeChange?: (age: number) => void;
 }
 
 interface ScoreRecord {
   score: number;
-  mode: "3x3" | "4x4";
+  mode: "3x3" | "4x4" | "chameleon" | "phonics";
   timestamp: number;
 }
 
@@ -19,13 +26,210 @@ export default function ScoreTracker({
   currentScore,
   gameMode,
   workingMemoryScore = 0,
+  processingSpeedScore = 0,
+  attentionScore = 0,
+  auditoryProcessingScore = 0,
+  userAge = 0,
+  gamePhase,
   onReset,
+  onAgeChange,
 }: ScoreTrackerProps) {
   const [bestScore, setBestScore] = useState(0);
   const [recentScores, setRecentScores] = useState<ScoreRecord[]>([]);
-  const [ageInYears, setAgeInYears] = useState<number>(0);
+  const [ageInYears, setAgeInYears] = useState<number>(userAge || 0);
+
+  const handleAgeChange = (age: number) => {
+    setAgeInYears(age);
+    onAgeChange?.(age);
+  };
+
+  useEffect(() => {
+    if (userAge) {
+      setAgeInYears(userAge);
+    }
+  }, [userAge]);
   const [cognitiveLevel, setCognitiveLevel] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const getCognitiveAssessment = useCallback(async () => {
+    if (
+      ageInYears <= 0 ||
+      (workingMemoryScore <= 0 &&
+        processingSpeedScore <= 0 &&
+        attentionScore <= 0 &&
+        auditoryProcessingScore <= 0)
+    ) {
+      setCognitiveLevel(
+        "Please enter valid age and complete at least one game"
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const ageInMonths = ageInYears;
+      const results: string[] = [];
+
+      // Working Memory Assessment
+      if (workingMemoryScore > 0) {
+        try {
+          const wmResponse = await fetch(
+            "https://africogbe-production.up.railway.app/predict/working-memory",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                Age: ageInMonths,
+                WorkingMemory_Score: workingMemoryScore,
+              }),
+            }
+          );
+          if (wmResponse.ok) {
+            const wmData = await wmResponse.json();
+            results.push(
+              `Working Memory: ${mapPredictionToString(wmData.predicted)}`
+            );
+          }
+        } catch (error) {
+          results.push("Working Memory: Error");
+        }
+      }
+
+      // Processing Speed Assessment
+      if (processingSpeedScore > 0) {
+        try {
+          const psResponse = await fetch(
+            "https://africogbe-production.up.railway.app/predict/processing-speed",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                Age: ageInMonths,
+                ProcessingSpeed_Score: processingSpeedScore,
+              }),
+            }
+          );
+          if (psResponse.ok) {
+            const psData = await psResponse.json();
+            results.push(
+              `Processing Speed: ${mapPredictionToString(psData.predicted)}`
+            );
+          }
+        } catch (error) {
+          results.push("Processing Speed: Error");
+        }
+      }
+      // Attention Assessment
+      if (attentionScore > 0) {
+        // Scale attention score from 0-100 to 35-0 (inverted: higher UI score = lower API value)
+        const scaledAttentionScore = Math.round(
+          35 - (attentionScore / 100) * 35
+        );
+        console.log(scaledAttentionScore);
+        try {
+          const attResponse = await fetch(
+            "https://africogbe-production.up.railway.app/predict/attention",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                Age: ageInMonths,
+                Attention_Score: scaledAttentionScore,
+              }),
+            }
+          );
+          console.log(attResponse);
+          if (attResponse.ok) {
+            const attData = await attResponse.json();
+            results.push(
+              `Attention: ${mapAttentionPredictionToString(attData.predicted)}`
+            );
+          }
+        } catch (error) {
+          results.push("Attention: Error");
+        }
+      }
+
+      // Auditory Processing Assessment
+      if (auditoryProcessingScore > 0) {
+        try {
+          const apResponse = await fetch(
+            "https://africogbe-production.up.railway.app/predict/auditory-processing",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                Age: ageInMonths,
+                AuditoryProcessing_Score: auditoryProcessingScore,
+              }),
+            }
+          );
+          if (apResponse.ok) {
+            const apData = await apResponse.json();
+            results.push(
+              `Auditory Processing: ${mapPredictionToString(apData.predicted)}`
+            );
+          }
+        } catch (error) {
+          results.push("Auditory Processing: Error");
+        }
+      }
+
+      if (results.length > 0) {
+        setCognitiveLevel(results.join(" | "));
+      } else {
+        setCognitiveLevel("No assessments completed");
+      }
+    } catch (error) {
+      setCognitiveLevel("Connection error - please ensure server is running");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    ageInYears,
+    workingMemoryScore,
+    processingSpeedScore,
+    attentionScore,
+    auditoryProcessingScore,
+  ]);
+
+  // Automatically trigger cognitive assessment when all games are completed
+  useEffect(() => {
+    console.log("useEffect triggered. GamePhase:", gamePhase);
+    console.log("Scores:", {
+      workingMemoryScore,
+      processingSpeedScore,
+      attentionScore,
+      auditoryProcessingScore,
+    });
+
+    if (
+      gamePhase === "completed" &&
+      workingMemoryScore > 0 &&
+      processingSpeedScore > 0 &&
+      attentionScore > 0 &&
+      auditoryProcessingScore > 0 &&
+      ageInYears > 0 &&
+      !isLoading &&
+      !cognitiveLevel
+    ) {
+      console.log("All conditions met, triggering cognitive assessment...");
+      // Small delay to ensure UI has updated
+      setTimeout(() => {
+        getCognitiveAssessment();
+      }, 1000);
+    }
+  }, [
+    gamePhase,
+    workingMemoryScore,
+    processingSpeedScore,
+    attentionScore,
+    auditoryProcessingScore,
+    ageInYears,
+    isLoading,
+    cognitiveLevel,
+    getCognitiveAssessment,
+  ]);
 
   useEffect(() => {
     const savedScores = localStorage.getItem("ankaraPatternScores");
@@ -94,54 +298,6 @@ export default function ScoreTracker({
     return { label: "Very Low", color: "text-red-800" };
   };
 
-  const mapPredictionToString = (prediction: number): string => {
-    const mapping: { [key: number]: string } = {
-      0: "Very Low",
-      1: "Low",
-      2: "Below Average",
-      3: "Average",
-      4: "Above Average",
-    };
-    return mapping[prediction] || "Unknown";
-  };
-
-  const getCognitiveAssessment = async () => {
-    if (ageInYears <= 0 || workingMemoryScore <= 0) {
-      setCognitiveLevel("Please enter valid age and complete the game");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const ageInMonths = ageInYears * 12;
-      const response = await fetch(
-        "https://africogbe-production.up.railway.app/predict",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            Age: ageInMonths,
-            WorkingMemory_Score: workingMemoryScore,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const predictionString = mapPredictionToString(data.predicted);
-        setCognitiveLevel(predictionString);
-      } else {
-        setCognitiveLevel("Error getting prediction");
-      }
-    } catch (error) {
-      setCognitiveLevel("Connection error - please ensure server is running");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const interpretation = getWorkingMemoryInterpretation(workingMemoryScore);
 
   return (
@@ -151,35 +307,114 @@ export default function ScoreTracker({
       </h3>
 
       <div className="space-y-4">
-        <div className="text-center border-b pb-3">
-          <div className="text-sm text-gray-600">Working Memory Score</div>
-          <div className="text-3xl font-bold text-purple-600">
-            {workingMemoryScore}/100
-          </div>
-          <div className={`text-sm font-medium ${interpretation.color}`}>
-            {interpretation.label}
-          </div>
+        <div className="text-center border-b pb-3 space-y-3">
+          {(workingMemoryScore > 0 || gamePhase?.includes("ankara")) && (
+            <div>
+              <div className="text-xs text-gray-600">Working Memory Score</div>
+              <div className="text-lg font-bold text-purple-600">
+                {workingMemoryScore}/100
+              </div>
+              <div className={`text-xs font-medium ${interpretation.color}`}>
+                {interpretation.label}
+              </div>
+            </div>
+          )}
+          {(processingSpeedScore > 0 || gamePhase?.includes("ankara")) && (
+            <div>
+              <div className="text-xs text-gray-600">
+                Processing Speed Score
+              </div>
+              <div className="text-lg font-bold text-orange-600">
+                {processingSpeedScore}/100
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  getWorkingMemoryInterpretation(processingSpeedScore).color
+                }`}
+              >
+                {getWorkingMemoryInterpretation(processingSpeedScore).label}
+              </div>
+            </div>
+          )}
+          {(attentionScore > 0 || gamePhase === "game-2") && (
+            <div>
+              <div className="text-xs text-gray-600">Attention Score</div>
+              <div className="text-lg font-bold text-green-600">
+                {attentionScore}/100
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  getWorkingMemoryInterpretation(attentionScore).color
+                }`}
+              >
+                {getWorkingMemoryInterpretation(attentionScore).label}
+              </div>
+            </div>
+          )}
+          {(auditoryProcessingScore > 0 || gamePhase === "game-3") && (
+            <div>
+              <div className="text-xs text-gray-600">
+                Auditory Processing Score
+              </div>
+              <div className="text-lg font-bold text-blue-600">
+                {auditoryProcessingScore}/100
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  getWorkingMemoryInterpretation(auditoryProcessingScore).color
+                }`}
+              >
+                {getWorkingMemoryInterpretation(auditoryProcessingScore).label}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3 border-b pb-3">
-          <div className="text-center">
-            <label className="block text-sm text-gray-600 mb-2">
-              Age (Years)
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={ageInYears || ""}
-              onChange={(e) => setAgeInYears(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter age"
-            />
-          </div>
+          {userAge ? (
+            <div className="text-center">
+              <div className="text-sm text-gray-600">Age: {userAge} years</div>
+              {gamePhase && (
+                <div className="text-xs text-blue-600 mt-1">
+                  {gamePhase.includes("ankara")
+                    ? "Game 1/3: Ankara Pattern"
+                    : gamePhase === "game-2"
+                    ? "Game 2/3: Chameleon Colors"
+                    : gamePhase === "game-3"
+                    ? "Game 3/3: Sound Spelling"
+                    : gamePhase === "completed"
+                    ? "✅ All Games Complete"
+                    : ""}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <label className="block text-sm text-gray-600 mb-2">
+                Age (Years)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={ageInYears || ""}
+                onChange={(e) => handleAgeChange(parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter age"
+              />
+            </div>
+          )}
 
           <button
             onClick={getCognitiveAssessment}
-            disabled={isLoading || ageInYears <= 0 || workingMemoryScore <= 0}
+            disabled={
+              isLoading ||
+              ageInYears <= 0 ||
+              (workingMemoryScore <= 0 &&
+                processingSpeedScore <= 0 &&
+                attentionScore <= 0 &&
+                auditoryProcessingScore <= 0)
+            }
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Analyzing..." : "Get Cognitive Assessment"}
@@ -187,9 +422,13 @@ export default function ScoreTracker({
 
           {cognitiveLevel && (
             <div className="text-center">
-              <div className="text-sm text-gray-600">Cognitive Level</div>
-              <div className="text-lg font-semibold text-indigo-600 mt-1">
-                {cognitiveLevel}
+              <div className="text-sm text-gray-600">Cognitive Assessment</div>
+              <div className="text-sm font-medium text-indigo-600 mt-1 leading-relaxed">
+                {cognitiveLevel.split(" | ").map((assessment, index) => (
+                  <div key={index} className="mb-1">
+                    {assessment}
+                  </div>
+                ))}
               </div>
             </div>
           )}
