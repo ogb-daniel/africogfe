@@ -85,6 +85,9 @@ export default function Home() {
         gameScores;
       // Working Memory Assessment
       if (workingMemory > 0) {
+        const scaledWorkingMemoryScore = Math.round(
+          50 + (workingMemory / 100) * 50
+        );
         try {
           const wmResponse = await fetch(
             "https://africogbe-production.up.railway.app/predict/working-memory",
@@ -93,7 +96,7 @@ export default function Home() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 Age: userAge,
-                WorkingMemory_Score: workingMemory,
+                WorkingMemory_Score: scaledWorkingMemoryScore,
               }),
             }
           );
@@ -110,6 +113,9 @@ export default function Home() {
 
       // Processing Speed Assessment
       if (processingSpeed > 0) {
+        const scaledProcessingSpeedScore = Math.round(
+          50 + (processingSpeed / 100) * 50
+        );
         try {
           const psResponse = await fetch(
             "https://africogbe-production.up.railway.app/predict/processing-speed",
@@ -118,7 +124,7 @@ export default function Home() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 Age: userAge,
-                ProcessingSpeed_Score: processingSpeed,
+                ProcessingSpeed_Score: scaledProcessingSpeedScore,
               }),
             }
           );
@@ -163,6 +169,9 @@ export default function Home() {
 
       // Auditory Processing Assessment
       if (auditoryProcessing > 0) {
+        const scaledAuditoryProcessingScore = Math.round(
+          50 + (auditoryProcessing / 100) * 50
+        );
         try {
           const apResponse = await fetch(
             "https://africogbe-production.up.railway.app/predict/auditory-processing",
@@ -171,7 +180,7 @@ export default function Home() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 Age: userAge,
-                AuditoryProcessing_Score: auditoryProcessing,
+                AuditoryProcessing_Score: scaledAuditoryProcessingScore,
               }),
             }
           );
