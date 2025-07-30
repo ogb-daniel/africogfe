@@ -65,16 +65,47 @@ export default function PhonicsSpellingGame({
   const [showingWord, setShowingWord] = useState(false);
   const [usedWords, setUsedWords] = useState<string[]>([]);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
 
   // Check if Web Speech API is supported
   const isSpeechSupported =
     typeof window !== "undefined" && "speechSynthesis" in window;
 
+  // iOS voice loading - critical for iPhone compatibility
+  useEffect(() => {
+    if (!isSpeechSupported) return;
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      console.log(`Loaded ${voices.length} voices`);
+      setVoicesLoaded(voices.length > 0);
+    };
+
+    // Load voices immediately (works on desktop)
+    loadVoices();
+
+    // iOS requires waiting for voiceschanged event
+    const handleVoicesChanged = () => {
+      loadVoices();
+    };
+
+    window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+    
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+    };
+  }, [isSpeechSupported]);
+
   const speakWord = (word: string) => {
     if (!isSpeechSupported) {
       alert(
-        "Speech synthesis is not supported in your browser. Please use a modern browser like Chrome, Firefox, or Safari."
+        "Speech synthesis is not supported in your browser. Please use Safari on iPhone or a modern desktop browser."
       );
+      return;
+    }
+
+    if (!voicesLoaded) {
+      alert("Voices are still loading. Please wait a moment and try again.");
       return;
     }
 
@@ -83,22 +114,38 @@ export default function PhonicsSpellingGame({
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = 0.8; // Slightly slower for better comprehension
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+    // Small delay for iOS
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.rate = 0.7; // Slower for better comprehension
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
 
-    utterance.onend = () => {
-      setIsPlaying(false);
-    };
+      // Select best voice for iOS
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Priority: English local voice > English voice > any voice
+        const englishLocal = voices.find(v => v.lang.startsWith('en') && v.localService);
+        const english = voices.find(v => v.lang.startsWith('en'));
+        const defaultVoice = voices[0];
+        
+        utterance.voice = englishLocal || english || defaultVoice;
+        console.log('Using voice:', utterance.voice?.name);
+      }
 
-    utterance.onerror = () => {
-      setIsPlaying(false);
-      console.error("Speech synthesis error");
-    };
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
 
-    speechRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
+      utterance.onerror = (event) => {
+        setIsPlaying(false);
+        console.error("Speech error:", event);
+        alert("Speech failed. On iPhone: Check silent mode is OFF and volume is up.");
+      };
+
+      speechRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    }, 100);
   };
 
   const getRandomWord = (): WordData => {
@@ -146,10 +193,10 @@ export default function PhonicsSpellingGame({
     setShowingWord(true);
     setTrialStartTime(Date.now());
 
-    // Automatically play the word after a brief delay
-    setTimeout(() => {
-      speakWord(word.word);
-    }, 1000);
+    // Don't auto-play on iOS - requires user gesture
+    // setTimeout(() => {
+    //   speakWord(word.word);
+    // }, 1000);
   };
 
   const calculatePhonemeAccuracy = (
@@ -299,12 +346,24 @@ export default function PhonicsSpellingGame({
           <div className="bg-white rounded-lg p-6 shadow-lg max-w-md">
             <h3 className="text-lg font-semibold mb-3">How to Play</h3>
             <ol className="text-sm text-gray-600 space-y-2 text-left">
-              <li>1. You&apos;ll see a picture and hear a word</li>
-              <li>2. Listen carefully to how the word sounds</li>
-              <li>3. Type the spelling of the word you heard</li>
-              <li>4. Click the speaker button to hear it again</li>
+              <li>1. You&apos;ll see a picture and description</li>
+              <li>2. Tap the speaker button to hear the word</li>
+              <li>3. Type the spelling of what you heard</li>
+              <li>4. Tap speaker again to repeat if needed</li>
               <li>5. Submit your spelling when ready</li>
             </ol>
+            
+            {/* iOS troubleshooting */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <h4 className="text-sm font-semibold text-blue-800 mb-2">📱 iPhone Users:</h4>
+              <ul className="text-xs text-blue-700 space-y-1">
+                <li>• Use Safari browser (not Chrome)</li>
+                <li>• Turn OFF silent mode (flip switch)</li>
+                <li>• Turn volume UP before starting</li>
+                <li>• Close other apps if audio fails</li>
+                <li>• Restart Safari if no sound</li>
+              </ul>
+            </div>
           </div>
           <button
             onClick={startGame}
@@ -325,12 +384,17 @@ export default function PhonicsSpellingGame({
             </div>
 
             <div className="space-y-4">
+              {/* iOS-specific instructions */}
+              <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg text-center">
+                📱 <strong>iPhone users:</strong> Turn OFF silent mode, turn volume UP, and tap the button below to hear the word
+              </div>
+              
               <button
                 onClick={() => speakWord(currentWord.word)}
-                disabled={isPlaying}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-all duration-200 flex items-center gap-2 mx-auto"
+                disabled={isPlaying || !voicesLoaded}
+                className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-all duration-200 flex items-center gap-3 mx-auto text-lg font-bold shadow-lg"
               >
-                🔊 {isPlaying ? "Playing..." : "Play Word"}
+                🔊 {isPlaying ? "🎵 Playing..." : !voicesLoaded ? "⏳ Loading voices..." : "🎧 TAP TO HEAR WORD"}
               </button>
 
               <div className="space-y-2">
