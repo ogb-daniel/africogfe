@@ -318,7 +318,7 @@ export default function PhonicsSpellingGame({
 
       {gameStarted && currentWord && showingWord && (
         <div className="text-center space-y-6">
-          <div className="bg-white rounded-lg p-8 shadow-lg min-w-[400px]">
+          <div className="bg-white rounded-lg p-8 shadow-lg md:min-w-[400px]">
             <div className="text-8xl mb-4">{currentWord.image}</div>
             <div className="text-lg text-gray-600 mb-4">
               {currentWord.description}

@@ -318,7 +318,7 @@ export default function Home() {
             </div>
           </div>
         ) : gamePhase === "ankara-3x3" || gamePhase === "ankara-4x4" ? (
-          <div className="flex flex-col lg:flex-row gap-8 justify-center items-start">
+          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start">
             <div className="flex-1 flex justify-center">
               <GameGrid
                 gridSize={currentGridSize}
