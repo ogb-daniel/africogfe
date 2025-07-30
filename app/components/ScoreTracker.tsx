@@ -72,6 +72,10 @@ export default function ScoreTracker({
 
       // Working Memory Assessment
       if (workingMemoryScore > 0) {
+        //Scale working memory score from 0-100 to 50-100
+        const scaledWorkingMemoryScore = Math.round(
+          50 + (workingMemoryScore / 100) * 50
+        );
         try {
           const wmResponse = await fetch(
             "https://africogbe-production.up.railway.app/predict/working-memory",
@@ -80,7 +84,7 @@ export default function ScoreTracker({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 Age: ageInMonths,
-                WorkingMemory_Score: workingMemoryScore,
+                WorkingMemory_Score: scaledWorkingMemoryScore,
               }),
             }
           );
@@ -97,6 +101,10 @@ export default function ScoreTracker({
 
       // Processing Speed Assessment
       if (processingSpeedScore > 0) {
+        // Scale processing speed score from 0-100 to 50-100
+        const scaledProcessingSpeedScore = Math.round(
+          50 + (processingSpeedScore / 100) * 50
+        );
         try {
           const psResponse = await fetch(
             "https://africogbe-production.up.railway.app/predict/processing-speed",
@@ -105,7 +113,7 @@ export default function ScoreTracker({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 Age: ageInMonths,
-                ProcessingSpeed_Score: processingSpeedScore,
+                ProcessingSpeed_Score: scaledProcessingSpeedScore,
               }),
             }
           );
@@ -152,6 +160,10 @@ export default function ScoreTracker({
 
       // Auditory Processing Assessment
       if (auditoryProcessingScore > 0) {
+        // Scale auditory processing score from 0-100 to 50-100
+        const scaledAuditoryProcessingScore = Math.round(
+          50 + (auditoryProcessingScore / 100) * 50
+        );
         try {
           const apResponse = await fetch(
             "https://africogbe-production.up.railway.app/predict/auditory-processing",
@@ -160,7 +172,7 @@ export default function ScoreTracker({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 Age: ageInMonths,
-                AuditoryProcessing_Score: auditoryProcessingScore,
+                AuditoryProcessing_Score: scaledAuditoryProcessingScore,
               }),
             }
           );
