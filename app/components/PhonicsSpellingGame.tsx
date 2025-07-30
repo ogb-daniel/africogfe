@@ -89,10 +89,16 @@ export default function PhonicsSpellingGame({
       loadVoices();
     };
 
-    window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
-    
+    window.speechSynthesis.addEventListener(
+      "voiceschanged",
+      handleVoicesChanged
+    );
+
     return () => {
-      window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      window.speechSynthesis.removeEventListener(
+        "voiceschanged",
+        handleVoicesChanged
+      );
     };
   }, [isSpeechSupported]);
 
@@ -125,12 +131,14 @@ export default function PhonicsSpellingGame({
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
         // Priority: English local voice > English voice > any voice
-        const englishLocal = voices.find(v => v.lang.startsWith('en') && v.localService);
-        const english = voices.find(v => v.lang.startsWith('en'));
+        const englishLocal = voices.find(
+          (v) => v.lang.startsWith("en") && v.localService
+        );
+        const english = voices.find((v) => v.lang.startsWith("en"));
         const defaultVoice = voices[0];
-        
+
         utterance.voice = englishLocal || english || defaultVoice;
-        console.log('Using voice:', utterance.voice?.name);
+        console.log("Using voice:", utterance.voice?.name);
       }
 
       utterance.onend = () => {
@@ -140,7 +148,9 @@ export default function PhonicsSpellingGame({
       utterance.onerror = (event) => {
         setIsPlaying(false);
         console.error("Speech error:", event);
-        alert("Speech failed. On iPhone: Check silent mode is OFF and volume is up.");
+        alert(
+          "Speech failed. On iPhone: Check silent mode is OFF and volume is up."
+        );
       };
 
       speechRef.current = utterance;
@@ -352,12 +362,13 @@ export default function PhonicsSpellingGame({
               <li>4. Tap speaker again to repeat if needed</li>
               <li>5. Submit your spelling when ready</li>
             </ol>
-            
+
             {/* iOS troubleshooting */}
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <h4 className="text-sm font-semibold text-blue-800 mb-2">📱 iPhone Users:</h4>
+              <h4 className="text-sm font-semibold text-blue-800 mb-2">
+                📱 iPhone Users:
+              </h4>
               <ul className="text-xs text-blue-700 space-y-1">
-                <li>• Use Safari browser (not Chrome)</li>
                 <li>• Turn OFF silent mode (flip switch)</li>
                 <li>• Turn volume UP before starting</li>
                 <li>• Close other apps if audio fails</li>
@@ -386,15 +397,21 @@ export default function PhonicsSpellingGame({
             <div className="space-y-4">
               {/* iOS-specific instructions */}
               <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg text-center">
-                📱 <strong>iPhone users:</strong> Turn OFF silent mode, turn volume UP, and tap the button below to hear the word
+                📱 <strong>iPhone users:</strong> Turn OFF silent mode, turn
+                volume UP, and tap the button below to hear the word
               </div>
-              
+
               <button
                 onClick={() => speakWord(currentWord.word)}
                 disabled={isPlaying || !voicesLoaded}
                 className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-all duration-200 flex items-center gap-3 mx-auto text-lg font-bold shadow-lg"
               >
-                🔊 {isPlaying ? "🎵 Playing..." : !voicesLoaded ? "⏳ Loading voices..." : "🎧 TAP TO HEAR WORD"}
+                🔊{" "}
+                {isPlaying
+                  ? "🎵 Playing..."
+                  : !voicesLoaded
+                  ? "⏳ Loading voices..."
+                  : "🎧 TAP TO HEAR WORD"}
               </button>
 
               <div className="space-y-2">
