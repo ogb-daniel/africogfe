@@ -1,4 +1,4 @@
-# Cognitive Assessment Games - AfricogFE
+## Cognitive Assessment Games - AfricogFE
 
 A comprehensive cognitive assessment platform featuring three interactive games designed to evaluate different cognitive abilities in children and adults.
 
@@ -439,11 +439,6 @@ All endpoints return:
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
 
 ## Acknowledgments
 
