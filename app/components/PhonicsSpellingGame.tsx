@@ -30,6 +30,27 @@ const WORD_BANK: WordData[] = [
     image: "🕳️",
     description: "A hollow place in a rock or mountain",
   },
+  {
+    word: "confetti",
+    image: "🎊",
+    description: "Colorful paper pieces thrown at celebrations",
+  },
+  {
+    word: "gallon",
+    image: "🥛",
+    description: "A large amount of liquid like milk or water",
+  },
+  {
+    word: "cup",
+    image: "☕",
+    description: "A small container for drinking",
+  },
+
+  {
+    word: "owl",
+    image: "🦉",
+    description: "A bird that flies at night and says 'hoo'",
+  },
 ];
 
 interface PhonicsSpellingGameProps {
