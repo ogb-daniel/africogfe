@@ -352,7 +352,7 @@ export default function Home() {
             </div>
           </div>
         ) : gamePhase === "game-2" ? (
-          <div className="flex flex-col lg:flex-row gap-8 justify-center items-start">
+          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start">
             <div className="flex-1 flex justify-center">
               <ChameleonColorsGame
                 onScoreChange={setCurrentScore}
@@ -375,7 +375,7 @@ export default function Home() {
             </div>
           </div>
         ) : gamePhase === "game-3" ? (
-          <div className="flex flex-col lg:flex-row gap-8 justify-center items-start">
+          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start">
             <div className="flex-1 flex justify-center">
               <PhonicsSpellingGame
                 onScoreChange={setCurrentScore}
